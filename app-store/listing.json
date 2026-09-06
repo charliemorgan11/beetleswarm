@@ -1,0 +1,28 @@
+{
+  "status": "Draft metadata; not submitted to Apple",
+  "name": "Beetle Swarm",
+  "subtitle": "Claim the map. Dodge beetles.",
+  "primary_language": "en-GB",
+  "version": "1.0.0",
+  "proposed_bundle_id": "uk.co.cm95.beetleswarm",
+  "sku": "beetle-swarm-ios-001",
+  "primary_category": "Games",
+  "game_subcategories": ["Arcade", "Puzzle"],
+  "keywords": "beetle,swarm,pirate,territory,arcade,puzzle,swipe,offline,map,trail,reflex",
+  "promotional_text": "Set sail across an old pirate chart. Claim 80% of the map, protect your trail and survive a growing swarm of beetles.",
+  "description": "Claim the chart. Survive the swarm.\n\nSwipe up, down, left or right to steer across an old pirate map. Draw a trail, return to safe land and claim the enclosed territory. But keep watch: a beetle touching your unfinished trail will cost you a life.\n\nCapture 80% of the map to reach the next chapter. Every chapter adds another beetle, leaving you with less room for mistakes.\n\n• Four-direction swipe controls\n• Three lives per voyage\n• One more beetle every chapter\n• Antique charts, bronze beetles and pirate lettering\n• Full-screen, portrait gameplay\n• Offline play, with no login or adverts\n\nPause at any time and resume your voyage. A closed or restarted app begins a new run.\n\nHow far can you sail before the swarm prevails?",
+  "review_notes": "The complete game and artwork are bundled in the app; no server or login is needed. Tap Set Sail and swipe to move. Close a trail on safe land to capture territory; capture 80% to advance. One beetle is added each chapter. Three lives are available per run. Pausing or switching apps pauses active play. Privacy and support information is accessible from the start and pause menus. The app has no purchases, ads, accounts or analytics. Please test on an iPhone in portrait orientation.",
+  "support_email_draft": "charlie@cm95.co.uk",
+  "privacy_label_draft": "Data Not Collected, subject to final binary and SDK audit",
+  "unresolved_before_submission": [
+    "Apple Developer membership, publisher identity and signing team",
+    "Confirm ownership and availability of proposed bundle ID in that Apple team",
+    "Connect a macOS build service and configure Apple signing credentials securely",
+    "Successful Xcode 26 or newer archive, TestFlight and physical iPhone verification",
+    "Real screenshots from the built iPhone app",
+    "Publish privacy and support pages at public HTTPS URLs; draft text is included",
+    "Confirm public support email and reviewer phone number",
+    "Choose price and sales territories, complete Apple's age-rating and compliance forms",
+    "Confirm rights in all supplied artwork, fonts, game branding and listing assets"
+  ]
+}

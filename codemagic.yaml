@@ -1,0 +1,42 @@
+workflows:
+  ios-build:
+    name: Beetle Swarm - iPhone archive
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: Beetle Swarm Apple
+    environment:
+      xcode: latest
+      node: 22
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: uk.co.cm95.beetleswarm
+      vars:
+        XCODE_PROJECT: ios/BeetleSwarm.xcodeproj
+        XCODE_SCHEME: BeetleSwarm
+    scripts:
+      - name: Prepare bundled game and run gameplay checks
+        script: |
+          node scripts/prepare-ios.mjs
+          node --test tests/engine.test.mjs tests/ios-package.test.mjs
+      - name: Generate Xcode project
+        script: |
+          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+          xcodegen generate --spec ios/project.yml --project ios
+      - name: Apply signing profiles
+        script: xcode-project use-profiles
+      - name: Set build number
+        script: |
+          cd ios
+          agvtool new-version -all "$((BUILD_NUMBER + 1))"
+      - name: Build signed iPhone archive
+        script: |
+          xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: false

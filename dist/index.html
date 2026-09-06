@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#302017">
+  <meta name="description" content="Claim the map. Survive the swarm. Swipe to close trails and capture 80% of an old pirate chart while avoiding roaming beetles.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Beetle Swarm">
+  <title>Beetle Swarm</title>
+  <link rel="icon" href="/assets/beetle-swarm-icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/beetle-swarm-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/assets/fonts/pirata-one.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/assets/fonts/im-fell-english.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="masthead">
+      <section class="game-hud" aria-label="Game status">
+        <div class="stat"><span class="stat-label">Chapter</span><strong id="level">01</strong></div>
+        <div class="stat"><span class="stat-label">Swarm</span><strong id="beetles">01</strong></div>
+        <div class="stat"><span class="stat-label">Lives</span><strong id="lives" aria-label="3 lives"><span>♥</span><span>♥</span><span>♥</span></strong></div>
+        <div class="stat"><span class="stat-label">of 80%</span><strong id="percent">0%</strong></div>
+      </section>
+      <div class="tools">
+        <button class="tool-button" id="fullscreen" aria-label="Enter full screen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></svg></button>
+        <button class="tool-button" id="pause" aria-label="Pause game" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
+      </div>
+    </header>
+    <div class="progress-track" role="progressbar" aria-label="Map claimed" aria-valuemin="0" aria-valuemax="80" aria-valuenow="0"><div id="progress-fill"></div><span class="goal-mark"></span></div>
+    <section class="board-region" aria-label="Game board">
+      <div class="board-frame" id="board-frame">
+        <canvas id="board" width="720" height="960" tabindex="0" aria-label="Beetle Swarm map. Swipe or use arrow keys to move. Close a trail on safe land to claim territory. Avoid beetles and your unfinished trail."></canvas>
+        <div id="overlay" class="overlay">
+          <section class="game-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+            <img class="cover-icon" id="cover-icon" src="/assets/beetle.png" alt="An engraved bronze beetle" width="100" height="100">
+            <p class="eyebrow" id="dialog-eyebrow">Captain’s Orders</p>
+            <h1 id="dialog-title">Beetle Swarm</h1>
+            <p id="dialog-description">Swipe to steer. Close your trail upon safe land to claim the chart.</p>
+            <div class="rules" id="start-rules"><span><b>80%</b> to claim</span><i></i><span><b>+1</b> beetle each chapter</span></div>
+            <p class="danger-note" id="danger-note">Guard your unfinished trail from the swarm.</p>
+            <button class="primary-button" id="action">Set Sail</button>
+            <button class="text-button" id="restart" hidden>New Voyage</button>
+          </section>
+        </div>
+      </div>
+    </section>
+    <p id="announcer" class="sr-only" role="status" aria-live="polite"></p>
+  </main>
+  <script type="module" src="/game.mjs"></script>
+</body>
+</html>

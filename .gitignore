@@ -1,0 +1,10 @@
+ios/BeetleSwarm/Web/
+ios/BeetleSwarm.xcodeproj/
+ios/build/
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.p8
+*.p12
+*.mobileprovision

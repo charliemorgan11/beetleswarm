@@ -1,0 +1,12 @@
+{
+  "name": "Beetle Swarm",
+  "short_name": "Beetle Swarm",
+  "description": "Claim 80% of the map. Survive the swarm.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#302017",
+  "theme_color": "#302017",
+  "icons": [{ "src": "/assets/beetle-swarm-icon.png", "sizes": "1254x1254", "type": "image/png", "purpose": "any" }]
+}
