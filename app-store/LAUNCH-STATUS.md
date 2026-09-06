@@ -2,7 +2,7 @@
 
 Prepared 6 September 2026. **Not uploaded, submitted or released on the App Store.**
 
-The existing web release is preserved. The iPhone source packages that same game and its fonts/artwork into an offline WKWebView app, in portrait, with full-screen play and automatic pause on app switching. No external code or assets are loaded. The native source and cloud workflow have not been compiled on macOS or tested on an iPhone in this environment. Packaging checks and the existing gameplay regression suite can run here.
+The existing web release is preserved. The iPhone source packages that same game and its fonts/artwork into an offline WKWebView app, in portrait, with full-screen play and automatic pause on app switching. No external code or assets are loaded. The native app compiled successfully for the iPhone simulator on a hosted Mac with Xcode 26.3. All 12 gameplay and offline packaging checks passed in the same run. A signed device archive, TestFlight and physical iPhone testing have not been completed. The separate Codemagic signing workflow has not run.
 
 ## Apple account
 
@@ -12,7 +12,7 @@ https://developer.apple.com/help/account/membership/enrolling-in-the-app/
 
 ## Build route without owning a laptop
 
-`codemagic.yaml` prepares and archives the iPhone app on a hosted Mac. It has not been connected or executed. Connect the owner-controlled repository `https://github.com/charliemorgan11/beetleswarm` to Codemagic. The repository includes the complete game, artwork, font licenses, native source and launch drafts. The prepared export also includes a GitHub Actions unsigned simulator compilation check. It runs when this source is pushed to main. Check its latest run before treating native compilation as verified. GitHub repository access was connected after the initial upload attempt.
+`codemagic.yaml` prepares and archives the iPhone app on a hosted Mac. It has not been connected or executed. Connect the owner-controlled repository `https://github.com/charliemorgan11/beetleswarm` to Codemagic. The repository includes the complete game, artwork, font licenses, native source and launch drafts. The prepared export also includes a GitHub Actions unsigned simulator compilation check. It runs when this source is pushed to main. The first run passed on source commit `51635b4e03714f6d0861b51db93f6ea7dc1e1dc0`: https://github.com/charliemorgan11/beetleswarm/actions/runs/34066297313. This verifies compilation, not device gameplay or App Store readiness.
 
 1. Confirm the publisher and register the proposed bundle identifier `uk.co.cm95.beetleswarm` in the correct Apple team, or update it in both `ios/project.yml` and `codemagic.yaml`. No identifier has been reserved.
 2. Create an iOS app record in App Store Connect using the bundle ID and listing draft. Select price and territories; do not assume worldwide compliance or free pricing.
