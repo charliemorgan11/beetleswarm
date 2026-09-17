@@ -1,6 +1,6 @@
 # Beetle Swarm
 
-A mobile web game built from the owner's brief: swipe in four directions, close trails to claim 80% of a pirate map, and avoid roaming beetles. Chapter 1 has one beetle; every chapter adds one. Three lives per run. Claimed land is safe. Beetles hitting open trails, or crossing your own trail, costs a life.
+A mobile web game built from the owner's brief: swipe in four directions, close trails to claim 80% of a pirate map, and avoid roaming beetles. Chapter 1 has one beetle; every chapter adds one. You begin with three lives. Losing a life keeps the current chapter and claimed land; after all three lives are lost, retry the same chapter with three fresh lives and a new map. Only the confirmed New Voyage action starts again at Chapter 1. Claimed land is safe. Beetles hitting open trails, or crossing your own trail, costs a life.
 
 The static application is in `dist/`. `engine.mjs` holds the simulation and flood-fill territory rules; `game.mjs` renders the map, connects swipe and keyboard input, and handles the game screens. The app manifest and icon support adding the game to a phone home screen. The map fills the available viewport below a compact status bar and requests browser full-screen mode when supported. Captures update the percentage without a popup; reaching 80% advances automatically after a brief 650 ms beat. Resizing preserves the current run. It requires a network connection and does not save runs between reloads.
 

@@ -27,6 +27,10 @@ export class SwarmGame {
     });
   }
   start() { this.level = 1; this.lives = 3; this.setLevel(1); this.state = 'playing'; this.emit('start'); }
+  retryLevel() {
+    if (this.state !== 'over') return;
+    this.lives = 3; this.setLevel(this.level); this.state = 'playing'; this.emit('retry');
+  }
   nextLevel() { if (this.state !== 'won') return; this.setLevel(this.level + 1); this.state = 'playing'; this.emit('level'); }
   resume() { if (this.state === 'paused' || this.state === 'hit') { this.state = 'playing'; this.direction = null; this.tick = 0; this.emit('resume'); } }
   pause() { if (this.state === 'playing') { this.state = 'paused'; this.emit('pause'); } }

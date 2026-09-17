@@ -124,7 +124,7 @@ function hideDialog() {
 }
 function handleEvent(event) {
   updateHud();
-  if (['start', 'level', 'resume'].includes(event.type)) {
+  if (['start', 'level', 'resume', 'retry'].includes(event.type)) {
     hideDialog(); startTime = performance.now(); levelAdvanceAt = 0;
     $('announcer').textContent = `Chapter ${game.level}. ${game.beetles.length} ${game.beetles.length === 1 ? 'beetle' : 'beetles'}. Claim 80% of the map.`;
   }
@@ -140,8 +140,8 @@ function handleEvent(event) {
   if (event.type === 'hit') {
     $('board-frame').classList.remove('hit'); requestAnimationFrame(() => $('board-frame').classList.add('hit'));
     showDialog(game.state === 'over'
-      ? { eyebrow: 'The Swarm Prevails', title: 'Shipwrecked', description: `Chapter ${game.level} · ${(game.progress * 100).toFixed(1)}% of the chart claimed.`, action: 'New Voyage' }
-      : { eyebrow: `${game.lives} ${game.lives === 1 ? 'LIFE' : 'LIVES'} REMAINING`, title: 'Trail Lost', description: `${event.reason} Claimed land remains yours.`, action: 'Sail On' });
+      ? { eyebrow: 'The Swarm Prevails', title: 'Shipwrecked', description: `Retry Chapter ${game.level} with three fresh lives and a new chart.`, action: `Retry Chapter ${game.level}`, restart: true }
+      : { eyebrow: `${game.lives} ${game.lives === 1 ? 'LIFE' : 'LIVES'} REMAINING`, title: 'Trail Lost', description: `${event.reason} Claimed land remains yours.`, action: `Continue Chapter ${game.level}` });
     $('announcer').textContent = `${event.reason} ${game.lives} lives remaining.`;
   }
 }
@@ -150,7 +150,8 @@ function act() {
   if (assetError) { location.reload(); return; }
   if (!artReady) return;
   enterFullscreen();
-  if (game.state === 'ready' || game.state === 'over') game.start();
+  if (game.state === 'ready') game.start();
+  else if (game.state === 'over') game.retryLevel();
   else if (game.state === 'won') game.nextLevel();
   else game.resume();
 }
