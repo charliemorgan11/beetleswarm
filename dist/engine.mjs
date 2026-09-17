@@ -1,5 +1,9 @@
 export const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 
+// Give swipes more time without making open trails easier for beetles to catch.
+const GAME_PACE = 8 / 9;
+const PLAYER_STEP_SECONDS = 1 / (18 * GAME_PACE);
+
 // Exact cell closures, continuous enemy movement, frame-rate-independent simulation.
 export class SwarmGame {
   constructor({ cols = 48, rows = 64, random = Math.random, onEvent = () => {} } = {}) {
@@ -18,7 +22,7 @@ export class SwarmGame {
     this.progress = 0; this.tick = 0; this.time = 0; this.revision = (this.revision || 0) + 1;
     this.beetles = Array.from({ length: level }, (_, i) => {
       const angle = this.random() * Math.PI * 2;
-      const speed = 4.2 + Math.min(level - 1, 16) * .12 + this.random() * 1.2;
+      const speed = (4.2 + Math.min(level - 1, 16) * .08 + this.random() * 1.2) * GAME_PACE;
       return { x: 3 + this.random() * (this.cols - 6), y: 7 + this.random() * (this.rows - 11), vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, phase: i * 2, turnIn: 1 + this.random() * 3 };
     });
   }
@@ -41,7 +45,7 @@ export class SwarmGame {
       this.moveBeetles(h);
       if (this.state !== 'playing') break;
       this.tick += h;
-      if (this.tick >= 1 / 18) { this.tick -= 1 / 18; this.movePlayer(); }
+      if (this.tick >= PLAYER_STEP_SECONDS) { this.tick -= PLAYER_STEP_SECONDS; this.movePlayer(); }
     }
   }
   movePlayer() {
