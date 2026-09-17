@@ -52,12 +52,32 @@ test('crossing an unfinished trail loses a life, direct reversal is ignored', ()
   game.steer('right'); game.movePlayer(); game.steer('up'); game.movePlayer();
   game.steer('left'); game.movePlayer(); assert.equal(game.state, 'hit'); assert.equal(game.lives, 2);
 });
-test('paused games freeze; moving beyond a safe border stops; three hits ends a run', () => {
+test('paused games freeze; exhausted lives can retry the same chapter or explicitly start over', () => {
   const game = setup(); game.steer('up'); game.movePlayer(); assert.equal(game.direction, null);
   const before = JSON.stringify(game.beetles); game.pause(); game.step(.1);
   assert.equal(JSON.stringify(game.beetles), before); game.resume();
-  for (let i = 0; i < 3; i++) { game.loseLife('Test collision'); if (i < 2) game.resume(); }
+  game.setLevel(12);
+  for (const beetle of game.beetles) Object.assign(beetle, { x: 9.5, y: 9.5, vx: 0, vy: 0, turnIn: 999 });
+  cut(game, 5);
+  assert.equal(game.progress, .5);
+  for (let i = 0; i < 3; i++) {
+    game.loseLife('Test collision');
+    assert.equal(game.level, 12); assert.equal(game.progress, .5);
+    if (i < 2) {
+      game.retryLevel(); assert.equal(game.lives, 2 - i); assert.equal(game.state, 'hit');
+      game.resume(); assert.equal(game.level, 12);
+    }
+  }
   assert.equal(game.state, 'over'); assert.equal(game.lives, 0);
+  game.retryLevel();
+  assert.equal(game.state, 'playing'); assert.equal(game.level, 12);
+  assert.equal(game.lives, 3); assert.equal(game.beetles.length, 12);
+  assert.equal(game.progress, 0); assert.equal(game.trail.length, 0);
+  assert.equal(game.direction, null); assert.equal(game.tick, 0);
+  assert.equal(game.cell(3, 5), 0);
+  assert.deepEqual(game.player, { x: 6, y: 0 });
+  assert.deepEqual(game.lastSafe, game.player);
+  game.steer('down'); game.step(.07); assert.equal(game.player.y, 1);
   game.start(); assert.equal(game.lives, 3); assert.equal(game.level, 1);
 });
 test('continuous beetle movement respects claimed territory over many steps', () => {

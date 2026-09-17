@@ -27,7 +27,7 @@ test('offline package references existing local resources without modules or rem
   assert.match(html, /id="legal-dialog"/);
 });
 
-test('bundled game boots, starts, pauses through the native bridge and resumes explicitly', async () => {
+test('bundled game supports pause, same-chapter retries and an explicit new voyage', async () => {
   const source = await readFile(path.join(web, 'game.js'), 'utf8');
   const elements = new Map();
   const context2d = new Proxy({}, { get: (o, k) => o[k] ?? (() => {}), set: (o, k, v) => { o[k] = v; return true; } });
@@ -74,6 +74,31 @@ test('bundled game boots, starts, pauses through the native bridge and resumes e
   element('legal-close').click();
   assert.equal(element('legal-dialog').open, false);
   assert.equal(sandbox.simulation.state, 'paused');
+
+  element('action').click();
+  sandbox.simulation.setLevel(12);
+  for (let life = 2; life >= 0; life--) {
+    sandbox.simulation.loseLife('A beetle caught your trail.');
+    assert.equal(element('overlay').hidden, false);
+    assert.equal(element('action').textContent, life ? 'Continue Chapter 12' : 'Retry Chapter 12');
+    element('action').click();
+    assert.equal(sandbox.simulation.level, 12);
+    assert.equal(sandbox.simulation.state, 'playing');
+    assert.equal(sandbox.simulation.lives, life || 3);
+    assert.equal(sandbox.simulation.beetles.length, 12);
+    assert.equal(element('overlay').hidden, true);
+    assert.equal(element('level').textContent, '12');
+  }
+  for (let life = 2; life >= 0; life--) {
+    sandbox.simulation.loseLife('A beetle caught your trail.');
+    if (life) element('action').click();
+  }
+  assert.equal(element('restart').hidden, false);
+  element('restart').click();
+  assert.equal(sandbox.simulation.level, 12); assert.equal(sandbox.simulation.state, 'over');
+  element('restart').click();
+  assert.equal(sandbox.simulation.level, 1); assert.equal(sandbox.simulation.lives, 3);
+  assert.equal(sandbox.simulation.state, 'playing'); assert.equal(element('overlay').hidden, true);
 });
 
 test('store text meets Apple field character limits', async () => {
