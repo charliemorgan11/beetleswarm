@@ -1,55 +1,18 @@
-// Bump this version whenever any cached game file changes.
-const CACHE_NAME = 'beetle-swarm-offline-v1';
-const ASSETS = [
-  '/index.html', '/game.mjs', '/engine.mjs', '/style.css', '/offline.js',
-  '/manifest.webmanifest', '/assets/beetle-swarm-icon.png',
-  '/assets/chart.png', '/assets/beetle.png', '/assets/menu-scroll.png',
-  '/assets/fonts/pirata-one.ttf', '/assets/fonts/im-fell-english.ttf',
-  '/assets/fonts/im-fell-english-italic.ttf'
-];
-
-async function downloadGame() {
-  const cache = await caches.open(CACHE_NAME);
-  // addAll is atomic: a failed download must not leave a half-installed game.
-  await cache.addAll(ASSETS.map(path => new Request(path, { cache: 'reload' })));
-}
-
+// Recovery worker: retire the experimental offline cache and use the network.
 self.addEventListener('install', event => {
-  event.waitUntil(downloadGame());
-  // Updates wait for old game windows to close; never interrupt an active run.
+  event.waitUntil(self.skipWaiting());
 });
-
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    for (const name of await caches.keys()) {
-      if (name.startsWith('beetle-swarm-offline-') && name !== CACHE_NAME) await caches.delete(name);
-    }
+    try {
+      for (const name of await caches.keys()) {
+        if (name.startsWith('beetle-swarm-offline-')) await caches.delete(name);
+      }
+    } catch {}
     await self.clients.claim();
   })());
 });
-
-self.addEventListener('fetch', event => {
-  const request = event.request, url = new URL(request.url);
-  if (request.method !== 'GET' || url.origin !== self.location.origin) return;
-  const path = url.pathname === '/' ? '/index.html' : url.pathname;
-  if (!ASSETS.includes(path)) return;
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    return (await cache.match(path)) || fetch(request);
-  })());
-});
-
+// No fetch handler: cached game resources can no longer intercept requests.
 self.addEventListener('message', event => {
-  if (event.data?.type !== 'PREPARE_OFFLINE' || !event.ports[0]) return;
-  event.waitUntil((async () => {
-    try {
-      const cache = await caches.open(CACHE_NAME);
-      const complete = (await Promise.all(ASSETS.map(path => cache.match(path)))).every(Boolean);
-      // Recover missing browser cache while online, without claiming a partial download is ready.
-      if (!complete) await downloadGame();
-      event.ports[0].postMessage({ ready: true });
-    } catch {
-      event.ports[0].postMessage({ ready: false });
-    }
-  })());
+  if (event.data?.type === 'PREPARE_OFFLINE') event.ports[0]?.postMessage({ ready: false });
 });

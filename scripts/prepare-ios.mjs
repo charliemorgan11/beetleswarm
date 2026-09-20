@@ -35,9 +35,6 @@ $('legal-close').addEventListener('click', () => legal.close());
 assert.ok(!/^\s*(import |export )/m.test(script), 'Native bundle must be self-contained');
 assert.ok(!/(?:fetch\(|XMLHttpRequest|WebSocket|https?:\/\/)/.test(script), 'Review network use and privacy before bundling');
 let html = localPaths(await readFile(path.join(source, 'index.html'), 'utf8'));
-// Native builds already bundle every resource; web caching is browser-only.
-html = html.replace(/\s*<script defer src="\/offline\.js"><\/script>/, '');
-html = html.replace(/\s*<p id="offline-status"[^>]*>[^<]*<\/p>/, '');
 html = html.replace('<script type="module" src="/game.mjs"></script>', '<script src="./game.js"></script>');
 html = html.replace(/\s*<link rel="manifest"[^>]+>/, '');
 html = html.replace('<meta charset="utf-8">', `<meta charset="utf-8">\n  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">`);
