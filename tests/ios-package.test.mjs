@@ -25,86 +25,6 @@ test('offline package references existing local resources without modules or rem
   assert.match(html, /connect-src 'none'/);
   assert.match(html, /id="legal-open"/);
   assert.match(html, /id="legal-dialog"/);
-  assert.ok(!html.includes('offline.js') && !html.includes('offline-status'));
-});
-
-test('web cache serves the complete game offline and reports failed downloads honestly', async () => {
-  const handlers = {}, stores = new Map();
-  let online = true, networkCalls = 0, claimed = false, failPath = null;
-  const origin = 'https://game.test';
-  const key = request => new URL(typeof request === 'string' ? request : request.url, origin).pathname;
-  const network = async request => {
-    networkCalls++;
-    const pathname = key(request);
-    if (!online || pathname === failPath) throw new Error('Network unavailable');
-    return new Response(await readFile(path.join(root, 'dist', pathname.slice(1))));
-  };
-  const caches = {
-    async open(name) {
-      if (!stores.has(name)) stores.set(name, new Map());
-      const entries = stores.get(name);
-      return {
-        async match(request) { return entries.get(key(request))?.clone(); },
-        async addAll(requests) {
-          const responses = await Promise.all(requests.map(network));
-          requests.forEach((request, i) => entries.set(key(request), responses[i]));
-        }
-      };
-    },
-    async keys() { return [...stores.keys()]; },
-    async delete(name) { return stores.delete(name); }
-  };
-  const sandbox = {
-    self: { location: { origin }, clients: { async claim() { claimed = true; } },
-      addEventListener(name, handler) { handlers[name] = handler; } },
-    caches, fetch: network, URL,
-    Request: class extends Request { constructor(url, options) { super(new URL(url, origin), options); } }
-  };
-  vm.runInNewContext(await readFile(path.join(root, 'dist/sw.js'), 'utf8'), sandbox);
-  async function lifecycle(name) { let task; handlers[name]({ waitUntil(promise) { task = promise; } }); await task; }
-  async function offlineStatus() {
-    let result, task;
-    handlers.message({ data: { type: 'PREPARE_OFFLINE' },
-      ports: [{ postMessage(value) { result = value.ready; } }], waitUntil(promise) { task = promise; } });
-    await task; return result;
-  }
-  // A failed asset must reject installation, not mark a partial game ready.
-  failPath = '/assets/beetle.png';
-  await assert.rejects(lifecycle('install'));
-  assert.equal(await offlineStatus(), false);
-  failPath = null;
-  await lifecycle('install');
-  stores.set('beetle-swarm-offline-old', new Map());
-  stores.set('unrelated-cache', new Map());
-  await lifecycle('activate');
-  assert.equal(claimed, true);
-  assert.equal(stores.has('beetle-swarm-offline-old'), false);
-  assert.equal(stores.has('unrelated-cache'), true);
-
-  online = false;
-  const callsBefore = networkCalls;
-  async function cached(pathname) {
-    let response;
-    handlers.fetch({ request: { url: origin + pathname, method: 'GET' }, respondWith(promise) { response = promise; } });
-    assert.ok(response, `worker handles ${pathname}`);
-    return (await response).text();
-  }
-  const html = await cached('/?from=homescreen');
-  assert.match(html, /Beetle Swarm/);
-  const required = new Set([...html.matchAll(/(?:src|href)="(\/[^"?#]+)"/g)].map(match => match[1]));
-  const css = await cached('/style.css'), game = await cached('/game.mjs');
-  for (const match of css.matchAll(/url\(['"]?(\/[^)'"?#]+)/g)) required.add(match[1]);
-  for (const match of game.matchAll(/\.src = '(\/[^']+)'/g)) required.add(match[1]);
-  for (const match of game.matchAll(/from '\.\/([^']+)'/g)) required.add('/' + match[1]);
-  for (const resource of required) await cached(resource);
-  assert.equal(await offlineStatus(), true);
-  assert.equal(networkCalls, callsBefore, 'offline boot needs no network requests');
-  // Cache eviction is recoverable online and is not reported as offline-ready.
-  const gameCache = [...stores.entries()].find(([name]) => name.startsWith('beetle-swarm-offline-'))[1];
-  gameCache.delete('/assets/chart.png');
-  assert.equal(await offlineStatus(), false);
-  online = true;
-  assert.equal(await offlineStatus(), true);
 });
 
 test('bundled game supports pause, same-chapter retries and an explicit new voyage', async () => {
@@ -179,6 +99,37 @@ test('bundled game supports pause, same-chapter retries and an explicit new voya
   element('restart').click();
   assert.equal(sandbox.simulation.level, 1); assert.equal(sandbox.simulation.lives, 3);
   assert.equal(sandbox.simulation.state, 'playing'); assert.equal(element('overlay').hidden, true);
+});
+
+test('web recovery clears only game caches, retires its worker and returns to online play', async () => {
+  const handlers = {}, names = new Set(['beetle-swarm-offline-v1', 'unrelated-cache']);
+  let claimed = false, activated = false, unregistered = false, destination;
+  const caches = { async keys() { return [...names]; }, async delete(name) { return names.delete(name); } };
+  vm.runInNewContext(await readFile(path.join(root, 'dist/sw.js'), 'utf8'), {
+    caches, self: { addEventListener(name, fn) { handlers[name] = fn; },
+      async skipWaiting() { activated = true; }, clients: { async claim() { claimed = true; } } }
+  });
+  let task;
+  handlers.install({ waitUntil(value) { task = value; } }); await task;
+  handlers.activate({ waitUntil(value) { task = value; } }); await task;
+  assert.equal(activated, true); assert.equal(claimed, true);
+  assert.equal(handlers.fetch, undefined);
+  assert.deepEqual([...names], ['unrelated-cache']);
+  let ready;
+  handlers.message({ data: { type: 'PREPARE_OFFLINE' }, ports: [{ postMessage(data) { ready = data.ready; } }] });
+  assert.equal(ready, false);
+  names.add('beetle-swarm-offline-v1');
+  const page = await readFile(path.join(root, 'dist/restore.html'), 'utf8');
+  await vm.runInNewContext(page.match(/<script>([\s\S]*?)<\/script>/)[1], {
+    caches, window: { caches }, location: { origin: 'https://game.test', replace(url) { destination = url; } },
+    navigator: { serviceWorker: { async getRegistration() { return {
+      active: { scriptURL: 'https://game.test/sw.js' }, async unregister() { unregistered = true; }
+    }; } } }
+  });
+  assert.equal(unregistered, true); assert.equal(destination, '/');
+  assert.deepEqual([...names], ['unrelated-cache']);
+  const html = await readFile(path.join(root, 'dist/index.html'), 'utf8');
+  assert.ok(!html.includes('offline.js') && !html.includes('offline-status'));
 });
 
 test('store text meets Apple field character limits', async () => {

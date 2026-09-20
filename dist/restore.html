@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Restore Beetle Swarm</title>
+  <style>body{margin:0;min-height:100dvh;display:grid;place-items:center;background:#302017;color:#ead2a0;font:20px Georgia,serif;text-align:center}main{padding:28px;max-width:420px}a{color:#fff2be;display:inline-block;padding:16px}p{line-height:1.5}</style>
+</head>
+<body>
+  <main><h1>Beetle Swarm</h1><p>Restoring your game…</p><a href="/">Open the game</a></main>
+  <script>
+  (async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration('/');
+        const workers = [registration?.active, registration?.waiting, registration?.installing].filter(Boolean);
+        if (workers.some(worker => worker.scriptURL === location.origin + '/sw.js')) await registration.unregister();
+      }
+    } catch {}
+    try {
+      if ('caches' in window) {
+        for (const name of await caches.keys()) {
+          if (name.startsWith('beetle-swarm-offline-')) await caches.delete(name);
+        }
+      }
+    } catch {}
+    location.replace('/');
+  })();
+  </script>
+</body>
+</html>
