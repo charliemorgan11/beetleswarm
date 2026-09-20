@@ -44,6 +44,7 @@
             <p class="danger-note" id="danger-note">Guard your unfinished trail from the swarm.</p>
             <button class="primary-button" id="action">Set Sail</button>
             <button class="text-button" id="restart" hidden>New Voyage</button>
+            <p id="offline-status" role="status">Downloading for offline play…</p>
           </section>
         </div>
       </div>
@@ -51,5 +52,6 @@
     <p id="announcer" class="sr-only" role="status" aria-live="polite"></p>
   </main>
   <script type="module" src="/game.mjs"></script>
+  <script defer src="/offline.js"></script>
 </body>
 </html>
