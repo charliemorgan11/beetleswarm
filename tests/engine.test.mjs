@@ -89,3 +89,83 @@ test('continuous beetle movement respects claimed territory over many steps', ()
     assert.ok(!game.blocked(b.x, b.y));
   }
 });
+
+test('every chapter keeps the original Chapter 1 speed range and adds only beetle count', () => {
+  for (const sample of [0, .25, .5, .999999]) {
+    const game = new SwarmGame({ random: () => sample });
+    const expected = (4.2 + sample * 1.2) * (8 / 9);
+    for (const level of [1, 2, 12, 17, 25, 26, 50, 100]) {
+      game.setLevel(level);
+      assert.equal(game.beetles.length, level);
+      for (const beetle of game.beetles) {
+        assert.ok(Math.abs(Math.hypot(beetle.vx, beetle.vy) - expected) < 1e-12,
+          `Chapter ${level} must use Chapter 1 speeds`);
+      }
+    }
+  }
+});
+test('beetles do not accelerate when turning or bouncing during Chapter 25', () => {
+  const game = new SwarmGame({ random: () => .25 });
+  game.start(25);
+  const speeds = game.beetles.map(b => Math.hypot(b.vx, b.vy));
+  for (const beetle of game.beetles) beetle.turnIn = 0;
+  for (let frame = 0; frame < 1200; frame++) game.step(1 / 60);
+  game.beetles.forEach((beetle, i) => {
+    assert.ok(Math.abs(Math.hypot(beetle.vx, beetle.vy) - speeds[i]) < 1e-10);
+  });
+});
+test('head start opens Chapter 25 with 25 beetles, three lives and a fresh map', () => {
+  const events = [];
+  const game = new SwarmGame({ random: () => .25, onEvent: event => events.push(event.type) });
+  game.start(25);
+  assert.equal(game.state, 'playing'); assert.equal(game.level, 25);
+  assert.equal(game.beetles.length, 25); assert.equal(game.lives, 3);
+  assert.equal(game.progress, 0); assert.equal(game.trail.length, 0);
+  assert.equal(game.direction, null); assert.equal(game.tick, 0);
+  assert.deepEqual(game.player, game.lastSafe); assert.equal(game.player.y, 0);
+  assert.deepEqual(events, ['start']);
+  game.start();
+  assert.equal(game.level, 1); assert.equal(game.beetles.length, 1); assert.equal(game.lives, 3);
+});
+test('head start retains Chapter 25 after life loss and after all lives are exhausted', () => {
+  const game = new SwarmGame({ random: () => .25 });
+  game.start(25);
+  for (let i = 0; i < 3; i++) {
+    game.loseLife('Test collision');
+    assert.equal(game.level, 25); assert.equal(game.beetles.length, 25);
+    assert.equal(game.lives, 2 - i);
+    if (i < 2) game.resume();
+  }
+  assert.equal(game.state, 'over');
+  game.retryLevel();
+  assert.equal(game.level, 25); assert.equal(game.lives, 3);
+  assert.equal(game.beetles.length, 25); assert.equal(game.state, 'playing');
+  // Complete a real 80% capture with all beetles in the remaining strip.
+  for (const beetle of game.beetles) Object.assign(beetle, { x: 44.5, y: 30.5, vx: 0, vy: 0, turnIn: 999 });
+  game.player = { x: 38, y: 0 }; game.lastSafe = { ...game.player }; game.steer('down');
+  for (let i = 0; i < game.rows - 1 && game.state === 'playing'; i++) game.movePlayer();
+  assert.ok(game.progress >= .8); assert.equal(game.state, 'won');
+  game.nextLevel();
+  assert.equal(game.level, 26); assert.equal(game.beetles.length, 26);
+  assert.equal(game.lives, 3); assert.equal(game.state, 'playing');
+  for (const beetle of game.beetles) assert.ok(Math.abs(Math.hypot(beetle.vx, beetle.vy) - 4) < 1e-12);
+});
+test('normal and head-start games retain the same unchanged cursor pace', () => {
+  for (const level of [1, 25]) {
+    const game = new SwarmGame({ random: () => .25 });
+    game.start(level);
+    const startX = game.player.x;
+    game.steer('right');
+    game.step(.1); game.step(.1); game.step(.1); game.step(.1);
+    assert.equal(game.player.x - startX, 6); assert.equal(game.player.y, 0);
+    assert.equal(game.lives, 3);
+  }
+});
+test('invalid head-start values are rejected without changing the current run', () => {
+  const game = new SwarmGame({ random: () => .25 });
+  game.start(25);
+  for (const value of [0, -1, 2, 26, 1.5, NaN, Infinity, '25', null]) {
+    assert.throws(() => game.start(value), RangeError);
+    assert.equal(game.level, 25); assert.equal(game.lives, 3); assert.equal(game.state, 'playing');
+  }
+});

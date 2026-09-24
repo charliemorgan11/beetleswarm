@@ -30,9 +30,11 @@ $('action').disabled = true; $('action').textContent = 'Unfurling the Chart…';
 function assetsLoaded() {
   if (!chart.naturalWidth || !beetle.naturalWidth) return;
   artReady = true; $('action').disabled = false; $('action').textContent = 'Set Sail';
+  $('head-start').disabled = false;
 }
 function assetFailed() {
   assetError = true; $('action').disabled = false; $('action').textContent = 'Try Again';
+  $('head-start').disabled = true;
   $('dialog-description').textContent = 'The map could not load. Check your connection, then try again.';
 }
 chart.onload = () => { makeBase(); assetsLoaded(); }; beetle.onload = assetsLoaded;
@@ -112,6 +114,7 @@ function updateHud() {
 
 function showDialog({ eyebrow, title, description, action, restart = false }) {
   $('cover-icon').hidden = true; $('start-rules').hidden = true; $('danger-note').hidden = true;
+  $('head-start').hidden = true;
   $('dialog-eyebrow').textContent = eyebrow; $('dialog-title').textContent = title;
   $('dialog-description').textContent = description; $('action').textContent = action;
   $('restart').hidden = !restart; $('restart').dataset.confirm = ''; $('restart').textContent = 'New Voyage'; $('overlay').hidden = false;
@@ -156,6 +159,10 @@ function act() {
   else game.resume();
 }
 $('action').addEventListener('click', act);
+$('head-start').addEventListener('click', () => {
+  if (game.state !== 'ready' || !artReady || assetError) return;
+  enterFullscreen(); game.start(25);
+});
 $('restart').addEventListener('click', () => {
   if ($('restart').dataset.confirm === 'yes') { $('restart').dataset.confirm = ''; game.start(); }
   else { $('restart').dataset.confirm = 'yes'; $('restart').textContent = 'Begin anew from Chapter 1?'; }
@@ -166,7 +173,8 @@ function steer(direction) { game.steer(direction); }
 const keyDirections = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' };
 document.addEventListener('keydown', e => {
   if (!$('overlay').hidden && e.key === 'Tab') {
-    const focusable = [$('action'), ...(!$('restart').hidden ? [$('restart')] : [])];
+    const focusable = [$('action'), $('head-start'), $('restart')].filter(button => !button.hidden && !button.disabled);
+    if (!focusable.length) { e.preventDefault(); return; }
     if (e.shiftKey && document.activeElement === focusable[0]) { e.preventDefault(); focusable.at(-1).focus(); }
     else if (!e.shiftKey && document.activeElement === focusable.at(-1)) { e.preventDefault(); focusable[0].focus(); }
     return;

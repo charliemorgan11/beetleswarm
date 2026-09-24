@@ -22,11 +22,15 @@ export class SwarmGame {
     this.progress = 0; this.tick = 0; this.time = 0; this.revision = (this.revision || 0) + 1;
     this.beetles = Array.from({ length: level }, (_, i) => {
       const angle = this.random() * Math.PI * 2;
-      const speed = (4.2 + Math.min(level - 1, 16) * .08 + this.random() * 1.2) * GAME_PACE;
+      // Every chapter uses Chapter 1 speeds. Difficulty grows only through beetle count.
+      const speed = (4.2 + this.random() * 1.2) * GAME_PACE;
       return { x: 3 + this.random() * (this.cols - 6), y: 7 + this.random() * (this.rows - 11), vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, phase: i * 2, turnIn: 1 + this.random() * 3 };
     });
   }
-  start() { this.level = 1; this.lives = 3; this.setLevel(1); this.state = 'playing'; this.emit('start'); }
+  start(level = 1) {
+    if (level !== 1 && level !== 25) throw new RangeError('Start at Chapter 1 or use the Chapter 25 head start.');
+    this.lives = 3; this.setLevel(level); this.state = 'playing'; this.emit('start');
+  }
   retryLevel() {
     if (this.state !== 'over') return;
     this.lives = 3; this.setLevel(this.level); this.state = 'playing'; this.emit('retry');
@@ -56,7 +60,7 @@ export class SwarmGame {
     if (!this.direction) return;
     const [dx, dy] = DIRS[this.direction];
     const x = this.player.x + dx, y = this.player.y + dy;
-    if (x < 0 || x >= this.cols || y < 0 || y >= this.rows) { this.direction = null; return; }
+    if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) { this.direction = null; return; }
     const cell = this.cell(x, y);
     if (cell === 2) { this.loseLife('You crossed your unfinished trail.'); return; }
     if (cell === 0) {
